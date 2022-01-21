@@ -1500,6 +1500,8 @@ class Stop extends Button {
 
   onClick() {
     assert(running);
+    running = false;
+    graphics.registerOnAnimationEnd(null);
   }
 
   updateState() {
