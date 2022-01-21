@@ -67,14 +67,69 @@ function init () {
   rook_orig.y = board.rook().y;
 }
 
-function animate(path, capture) {
+function animate(start, path, capture) {
   if (!capture)
     clearCapture();
 
-  animatePath(path, capture? {x: board.rook().x, y: board.rook().y} : null);
+  if (navigator.userAgent.indexOf("Chrome") > -1)
+    animatePathSVG2(path, capture? {x: board.rook().x, y: board.rook().y} : null);
+  else
+    animatePathSVG1(start, path, capture? {x: board.rook().x, y: board.rook().y} : null);
+
 }
 
-function animatePath(path, capture) {
+function animatePathSVG1(start, path, capture) {
+  if (animateTranslateHandler) {
+    window.clearTimeout(animateTranslateHandler);
+    animateTranslateHandler = null;
+  }
+
+  const elm_rook = svg.querySelector('image.rook');
+
+  const next = () => {
+    if (path.length === 1) {
+      displayCapture(capture);
+      if (animationEndCallback)
+        animateTranslateHandler = window.setTimeout(animationEndCallback, 200);
+    }
+    else
+      animatePathSVG1(path[0], path.slice(1), capture);
+  };
+
+  if (!path[0].animate) {
+    elm_rook.setAttribute("transform",
+      `translate(${path[0].x - rook_orig.x} ${rook_orig.y - path[0].y})`);
+    next();
+  }
+  else
+    animateTranslate(elm_rook,
+      {x: start.x - rook_orig.x, y: rook_orig.y - start.y},
+      {x: path[0].x - rook_orig.x, y: rook_orig.y - path[0].y},
+      780,
+      next);
+}
+
+let animateTranslateHandler = null;
+
+function animateTranslate(elm, trf0, trf1, delay, completion_cb) {
+  const unit = 20; // ms
+  const n = Math.ceil(delay / unit);
+  const animate_idx = idx => {
+    elm.setAttribute("transform",
+      `translate(${trf0.x * (1 - idx/n) + trf1.x * idx/n} ${trf0.y * (1 - idx/n) + trf1.y * idx/n})`);
+    if (idx === n) {
+      if (completion_cb)
+        completion_cb();
+      animateTranslateHandler = null;
+    }
+    else
+      animateTranslateHandler = window.setTimeout(animate_idx, delay/n, 1 + idx);
+  };
+
+  animateTranslateHandler = window.setTimeout(animate_idx, delay/n, 1);
+}
+
+function animatePathSVG2(path, capture) {
   const elm_rook = svg.querySelector('image.rook');
   elm_rook.setAttribute('class', path[0].animate? 'rook animate' : 'rook');
   elm_rook.setAttribute("transform",
@@ -87,7 +142,7 @@ function animatePath(path, capture) {
         animationEndCallback ();
     }, 700);
   else
-    window.setTimeout(() => animatePath(path.slice(1), capture), path[0].animate? 1000 : 10);
+    window.setTimeout(() => animatePathSVG2(path.slice(1), capture), path[0].animate? 1000 : 10);
 }
 
 function displayCapture(capture) {
@@ -108,8 +163,7 @@ function clearCapture() {
 function animateUp (dst, capture) {
   const cur = {x: board.rook().x, y: board.rook().y};
   const prev = {x: cur.x, y: (cur.y - dst + 16) % 8};
-
-  console.log(prev, "=>", cur);
+  const p = {...prev};
 
   const path = [];
   while (prev.y + dst >= 8) {
@@ -119,14 +173,13 @@ function animateUp (dst, capture) {
     prev.y = -1;
   }
   path.push({animate: true, x: cur.x, y: cur.y});
-  animate(path, capture);
+  animate(p, path, capture);
 }
 
 function animateDown (dst, capture) {
   const cur = {x: board.rook().x, y: board.rook().y};
   const prev = {x: cur.x, y: (cur.y + dst) % 8};
-
-  console.log(prev, "=>", cur);
+  const p = {...prev};
 
   const path = [];
   while (prev.y - dst < 0) {
@@ -136,14 +189,13 @@ function animateDown (dst, capture) {
     prev.y = 8;
   }
   path.push({animate: true, x: cur.x, y: cur.y});
-  animate(path, capture);
+  animate(p, path, capture);
 }
 
 function animateRight (dst, capture) {
   const cur = {x: board.rook().x, y: board.rook().y};
   const prev = {x: (cur.x - dst + 16) % 8, y: cur.y};
-
-  console.log(prev, "=>", cur);
+  const p = {...prev};
 
   const path = [];
   while (prev.x + dst >= 8) {
@@ -153,14 +205,13 @@ function animateRight (dst, capture) {
     prev.x = -1;
   }
   path.push({animate: true, x: cur.x, y: cur.y});
-  animate(path, capture);
+  animate(p, path, capture);
 }
 
 function animateLeft (dst, capture) {
   const cur = {x: board.rook().x, y: board.rook().y};
   const prev = {x: (cur.x + dst) % 8, y: cur.y};
-
-  console.log(prev, "=>", cur);
+  const p = {...prev};
 
   const path = [];
   while (prev.x - dst < 0) {
@@ -170,11 +221,11 @@ function animateLeft (dst, capture) {
     prev.x = 8;
   }
   path.push({animate: true, x: cur.x, y: cur.y});
-  animate(path, capture);
+  animate(p, path, capture);
 }
 
 function reset () {
-  animate([{animate: true, x: rook_orig.x, y: rook_orig.y}], false);
+  animate({x: board.rook().x, y: board.rook().y}, [{animate: true, x: rook_orig.x, y: rook_orig.y}], false);
 }
 
 let animationEndCallback = null;

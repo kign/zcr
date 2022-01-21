@@ -20,6 +20,7 @@ function oneGameStep(moveCounter) {
 
   // const [coin, dice] = moveCounter === 1? [1, [2,1]] : [2, [5,5]];
   // const [coin, dice] = moveCounter === 1? [1, [1,4]] : [2, [5,5]];
+  // const [coin, dice] = [1, [1,1]];
   console.log("board#oneGameStep: coin =", coin, "; dice =", dice);
 
   const captured = move(coin, dice, false);
