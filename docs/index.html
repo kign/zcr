@@ -30,33 +30,53 @@ tr.win > td > span {
 </style>
 </head>
 <body>
-<svg id="board" width="800" height="800" viewBox="0 0 8 8">
-    <style>
-        .dark {fill: #819362; }
-        .light {fill: #ededd7; }
-        text { font: 0.22px sans-serif; font-weight: bold;}
-        image.animate {transition: all 700ms ease-in-out;}
-    </style>
-    <rect width="100%" height="100%" class="light" />
-</svg>
-
-<div id="history" style="display: inline-block; vertical-align: top; margin-left: 50px;">
-    <table style="width: 150px; white-space: nowrap">
-        <tbody>
-            <tr style="display: none"><td colspan="3"><hr></td></tr>
-        </tbody>
-    </table>
-</div>
-
-<div id="controls" style="display: inline-block; vertical-align: top; margin-left: 50px;">
-    <div><button name="back"><img src="undo.svg"> Back</button></div>
-    <div><button name="forward"><img src="redo.svg"> Forward</button></div>
-    <div><button name="step"><img src="step.svg"> Step</button></div>
-    <div><button name="run"><img src="play.svg"> Run</button></div>
-    <div><button name="stop"><img src="pause.svg"> Stop</button></div>
-    <div><button name="reset"><img src="rotate.svg"> Restart</button></div>
-</div>
-
+<table style="height:95vh">
+    <tr>
+        <td style="vertical-align: top; width: 100%;">
+            <svg id="board"  height="500" viewBox="0 0 8 8">
+                <style>
+                    .dark {fill: #819362; }
+                    .light {fill: #ededd7; }
+                    text { font: 0.22px sans-serif; font-weight: bold;}
+                    image.animate {transition: all 700ms ease-in-out;}
+                </style>
+                <rect width="100%" height="100%" class="light" />
+            </svg>
+        </td>
+        <td id="controls" style="vertical-align: top; width: 100px;">
+            <div><button name="back"><img src="undo.svg"> Back</button></div>
+            <div><button name="forward"><img src="redo.svg"> Forward</button></div>
+            <div><button name="step"><img src="step.svg"> Step</button></div>
+            <div><button name="run"><img src="play.svg"> Run</button></div>
+            <div><button name="stop"><img src="pause.svg"> Stop</button></div>
+            <div><button name="reset"><img src="rotate.svg"> Restart</button></div>
+        </td>
+        <td id="history" style="vertical-align: top; width: 150px;">
+            <table style="white-space: nowrap">
+                <tbody>
+                <tr style="display: none"><td colspan="3"><hr></td></tr>
+                </tbody>
+            </table>
+        </td>
+    </tr>
+</table>
+<script>
+  const fixLayout = () => {
+    const svg = document.getElementById('board');
+    const cnt = svg.parentElement;
+    cnt.style.width = '100%';
+    const h = cnt.clientHeight;
+    const w = cnt.clientWidth;
+    const size = `${Math.min(h,w) - 2}px`;
+    svg.setAttribute('width', size);
+    svg.setAttribute('height', size);
+    cnt.style.width = size;
+  }
+  // ideally, we would want to also reset layout on `resize` event,
+  // but won't work as-is: when we reset `cnt.style.width` abobe,
+  // we break original layout logic
+  window.addEventListener('DOMContentLoaded', fixLayout);
+</script>
 <script src="bundle.js"></script>
 </body>
 </html>
