@@ -65,6 +65,8 @@ tr.win > td > span {
     const svg = document.getElementById('board');
     const cnt = svg.parentElement;
     cnt.style.width = '100%';
+    svg.setAttribute('width', '200px');
+    svg.setAttribute('height', '200px');
     const h = cnt.clientHeight;
     const w = cnt.clientWidth;
     const size = `${Math.min(h,w) - 2}px`;
@@ -72,10 +74,8 @@ tr.win > td > span {
     svg.setAttribute('height', size);
     cnt.style.width = size;
   }
-  // ideally, we would want to also reset layout on `resize` event,
-  // but won't work as-is: when we reset `cnt.style.width` abobe,
-  // we break original layout logic
   window.addEventListener('DOMContentLoaded', fixLayout);
+  window.addEventListener('resize', fixLayout);
 </script>
 <script src="bundle.js"></script>
 </body>
