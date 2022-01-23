@@ -27,7 +27,7 @@ class Button {
 
   /*
    * Note that buttons include both text and SVG image which is not impacted by 'disabled' attribute;
-   * we need to apply CSS filter to it to make ot appear greyed out like adjacent text
+   * we need to apply CSS filter to it to make tt appear greyed out like adjacent text
    */
   disable(disabled) {
     if (disabled) {
@@ -41,7 +41,7 @@ class Button {
   }
 
   /*
-   * Interestingly, CSS spec mandates 'initial as default value for any CSS property,
+   * Interestingly, CSS spec mandates 'initial' as default value for any CSS property,
    * but in practice to return display to "normal" we have to use empty string
    */
   hide(hidden) {

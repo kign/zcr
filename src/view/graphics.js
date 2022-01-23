@@ -86,7 +86,7 @@ function animate(start, path, capture) {
   if (!capture)
     clearCapture();
 
-  // As of 2022-01, only Chrome (abd derivatives) seems to support CSS animation in SVG
+  // As of 2022-01, only Chrome (and derivatives) seems to support CSS animation in SVG
   // ideally, we would need to feature-test this instead of relying on user-agent string,
   // but that's not trivial unfortunately
   if (navigator.userAgent.indexOf("Chrome") > -1)
@@ -257,7 +257,7 @@ function animateLeft (dst, capture) {
 }
 
 /*
- * Reset the board; room smoothly transitions to the initial position
+ * Reset the board; rook smoothly transitions to the initial position
  */
 function reset () {
   animate({x: board.rook().x, y: board.rook().y}, [{animate: true, x: rook_orig.x, y: rook_orig.y}], false);

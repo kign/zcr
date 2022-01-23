@@ -1438,7 +1438,7 @@ class Button {
 
   /*
    * Note that buttons include both text and SVG image which is not impacted by 'disabled' attribute;
-   * we need to apply CSS filter to it to make ot appear greyed out like adjacent text
+   * we need to apply CSS filter to it to make tt appear greyed out like adjacent text
    */
   disable(disabled) {
     if (disabled) {
@@ -1452,7 +1452,7 @@ class Button {
   }
 
   /*
-   * Interestingly, CSS spec mandates 'initial as default value for any CSS property,
+   * Interestingly, CSS spec mandates 'initial' as default value for any CSS property,
    * but in practice to return display to "normal" we have to use empty string
    */
   hide(hidden) {
@@ -1592,8 +1592,8 @@ The reason for this is that each module has some static initialization and `node
 a module is fully initialized and ready when `require`d by another.
 
 While this imposes no serious constraint on design (one can always initialize all modules on the
-top level and then simply have them call one another with no boundaries via handlers passed as parameters),
-it's useful to have simple rules what any given module is allowed to `require`.
+top level and then simply have them call one another with no boundaries via handles passed as parameters),
+it's useful to have simple rules governing what any given module is allowed to `require`.
 
 Here we follow MVC architecture, with dependencies as follows:
 
@@ -1889,7 +1889,7 @@ function animate(start, path, capture) {
   if (!capture)
     clearCapture();
 
-  // As of 2022-01, only Chrome (abd derivatives) seems to support CSS animation in SVG
+  // As of 2022-01, only Chrome (and derivatives) seems to support CSS animation in SVG
   // ideally, we would need to feature-test this instead of relying on user-agent string,
   // but that's not trivial unfortunately
   if (navigator.userAgent.indexOf("Chrome") > -1)
@@ -2060,7 +2060,7 @@ function animateLeft (dst, capture) {
 }
 
 /*
- * Reset the board; room smoothly transitions to the initial position
+ * Reset the board; rook smoothly transitions to the initial position
  */
 function reset () {
   animate({x: board.rook().x, y: board.rook().y}, [{animate: true, x: rook_orig.x, y: rook_orig.y}], false);

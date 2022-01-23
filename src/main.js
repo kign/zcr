@@ -13,8 +13,8 @@ The reason for this is that each module has some static initialization and `node
 a module is fully initialized and ready when `require`d by another.
 
 While this imposes no serious constraint on design (one can always initialize all modules on the
-top level and then simply have them call one another with no boundaries via handlers passed as parameters),
-it's useful to have simple rules what any given module is allowed to `require`.
+top level and then simply have them call one another with no boundaries via handles passed as parameters),
+it's useful to have simple rules governing what any given module is allowed to `require`.
 
 Here we follow MVC architecture, with dependencies as follows:
 
