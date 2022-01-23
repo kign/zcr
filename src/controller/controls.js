@@ -8,6 +8,11 @@ const graphics = require('../view/graphics');
 const controls = document.getElementById('controls');
 let running = false;
 
+/*
+ * Each control button is implemented as a separate class
+ * method `disable` makes button disabled, and `hide` hides it
+ * Each button has `updateState` method to update its visibility
+ */
 class Button {
   constructor(name) {
     this.elm = controls.querySelector(`button[name=${name}]`);
@@ -20,6 +25,10 @@ class Button {
     });
   }
 
+  /*
+   * Note that buttons include both text and SVG image which is not impacted by 'disabled' attribute;
+   * we need to apply CSS filter to it to make ot appear greyed out like adjacent text
+   */
   disable(disabled) {
     if (disabled) {
       this.elm.setAttribute('disabled', 'yes');
@@ -31,6 +40,10 @@ class Button {
     }
   }
 
+  /*
+   * Interestingly, CSS spec mandates 'initial as default value for any CSS property,
+   * but in practice to return display to "normal" we have to use empty string
+   */
   hide(hidden) {
     this.elm.style.display = hidden? 'none' : '';
   }
@@ -147,5 +160,8 @@ class Reset extends Button {
   }
 }
 
+/*
+ * There is nothing to export; simply initialize all buttons with callbacks on initial load
+ */
 const buttons = [new Back(), new Forward(), new Step(), new Run(), new Stop(), new Reset()];
 buttons.forEach(b => b.updateState());

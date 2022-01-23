@@ -5,6 +5,7 @@ class Rook {
   }
 
   canTake(piece) {
+    // with this definition, piece can always take itself
     return piece.x === this.x || piece.y === this.y;
   }
 
@@ -20,6 +21,7 @@ class Bishop {
   }
 
   canTake(piece) {
+    // with this definition, piece can always take itself
     const dx = piece.x - this.x;
     const dy = piece.y - this.y;
     return dx === dy || dx + dy === 0;

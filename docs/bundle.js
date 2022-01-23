@@ -1419,6 +1419,11 @@ const graphics = require('../view/graphics');
 const controls = document.getElementById('controls');
 let running = false;
 
+/*
+ * Each control button is implemented as a separate class
+ * method `disable` makes button disabled, and `hide` hides it
+ * Each button has `updateState` method to update its visibility
+ */
 class Button {
   constructor(name) {
     this.elm = controls.querySelector(`button[name=${name}]`);
@@ -1431,6 +1436,10 @@ class Button {
     });
   }
 
+  /*
+   * Note that buttons include both text and SVG image which is not impacted by 'disabled' attribute;
+   * we need to apply CSS filter to it to make ot appear greyed out like adjacent text
+   */
   disable(disabled) {
     if (disabled) {
       this.elm.setAttribute('disabled', 'yes');
@@ -1442,6 +1451,10 @@ class Button {
     }
   }
 
+  /*
+   * Interestingly, CSS spec mandates 'initial as default value for any CSS property,
+   * but in practice to return display to "normal" we have to use empty string
+   */
   hide(hidden) {
     this.elm.style.display = hidden? 'none' : '';
   }
@@ -1558,6 +1571,9 @@ class Reset extends Button {
   }
 }
 
+/*
+ * There is nothing to export; simply initialize all buttons with callbacks on initial load
+ */
 const buttons = [new Back(), new Forward(), new Step(), new Run(), new Stop(), new Reset()];
 buttons.forEach(b => b.updateState());
 },{"../model/board":9,"../model/moves":10,"../view/graphics":12,"../view/history":13,"assert":1}],8:[function(require,module,exports){
@@ -1565,6 +1581,32 @@ const graphics = require('./view/graphics');
 const board = require('./model/board');
 const {Rook, Bishop} = require('./model/pieces');
 
+/*
+Some (subjective) notes on `node` dependencies:
+
+While of course Javascript methods can call each other in any order, recursively or otherwise,
+`require` should, generally, be free of circular dependencies
+(though it's not strictly enforced by either `node` or `browserify`).
+
+The reason for this is that each module has some static initialization and `node` must make sure
+a module is fully initialized and ready when `require`d by another.
+
+While this imposes no serious constraint on design (one can always initialize all modules on the
+top level and then simply have them call one another with no boundaries via handlers passed as parameters),
+it's useful to have simple rules what any given module is allowed to `require`.
+
+Here we follow MVC architecture, with dependencies as follows:
+
+CONTROLLER ----> VIEW ----> MODEL
+   |_________________________^
+
+Modules within each group should NOT generally `require` one another,
+except in MODEL group, where such dependencies should follow the architecture of the model.
+*/
+
+
+
+// initial positions
 board.positionPiece(new Rook(7,0));   // h1
 board.positionPiece(new Bishop(2,2)); // c3
 
@@ -1578,6 +1620,9 @@ let rook = null;
 let bishop = null;
 let original_rook = null;
 
+/*
+ * Initial positioning for both pieces
+ */
 function positionPiece(piece) {
   if (piece instanceof Rook) {
     rook = piece;
@@ -1587,6 +1632,17 @@ function positionPiece(piece) {
     bishop = piece;
 }
 
+/*
+ * Game reset
+ */
+function reset () {
+  rook.x = original_rook.x;
+  rook.y = original_rook.y;
+}
+
+/*
+ * One game step, per spec: coin, dice (twice), move
+ */
 function oneGameStep(moveCounter) {
   const coin = Math.ceil(2*Math.random());
   const dice = [Math.ceil(6*Math.random()), Math.ceil(6*Math.random())];
@@ -1601,6 +1657,12 @@ function oneGameStep(moveCounter) {
   moves.record(coin, dice, [rook.x, rook.y], end);
 }
 
+/*
+ * Move rook as prescribed; also determine capture (based on the position after move)
+ * and trigger animation via registered callbacks
+ * This method is also used for playback; to that end, it has `reverse` parameter
+ * to execute same movement in reverse
+ */
 function move(coin, dice, reverse) {
   if (coin === 2) { // "heads"
     if (reverse) {
@@ -1632,11 +1694,6 @@ function move(coin, dice, reverse) {
   }
 }
 
-function reset () {
-  rook.x = original_rook.x;
-  rook.y = original_rook.y;
-}
-
 const animationCallbacks = {};
 
 function registerOnMove(name, func_cb) {
@@ -1657,22 +1714,32 @@ module.exports = {
 },{"./moves":10,"./pieces":11}],10:[function(require,module,exports){
 const assert = require("assert");
 
+/*
+ * We record history of moves and current `pointer` for playback
+ */
+
 const moves = [];
 let pointer = 0;
 
 function record(coin, dice, rookPos, end) {
+  // can only add new move when pointer points to the end
   assert (pointer === moves.length);
   moves.push({coin: coin, dice: dice, pos: rookPos, end: end});
   pointer ++;
 }
 
+/*
+ * Two playback methods
+ */
 function moveBack() {
+  // when moving pointer back from "A B <ptr> C" to "A <ptr> B C", return B
   assert(pointer > 0);
   pointer --;
   return moves[pointer];
 }
 
 function moveForward() {
+  // when moving pointer forward from "A <ptr> B C" to "A B <ptr> C", return B
   assert(pointer < moves.length);
   pointer ++;
   return moves[pointer - 1];
@@ -1702,6 +1769,7 @@ class Rook {
   }
 
   canTake(piece) {
+    // with this definition, piece can always take itself
     return piece.x === this.x || piece.y === this.y;
   }
 
@@ -1717,6 +1785,7 @@ class Bishop {
   }
 
   canTake(piece) {
+    // with this definition, piece can always take itself
     const dx = piece.x - this.x;
     const dy = piece.y - this.y;
     return dx === dy || dx + dy === 0;
@@ -1739,6 +1808,10 @@ board.registerOnMove('left', animateLeft);
 board.registerOnMove('up', animateUp);
 board.registerOnMove('down', animateDown);
 
+/*
+ * Auxiliary methods to create SVG elements with provided properties
+ * NOTE: viewbox = "0 0 8 8"
+ */
 function rect (x, y) {
   const rect = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
   rect.setAttribute('x', x);
@@ -1781,12 +1854,16 @@ function dot(x, y) {
 const rook_orig = {};
 const svg = document.getElementById('board');
 
+/*
+ * One-time initialization call to draw the board
+ */
 function init () {
   for (let x = 0; x < 8; x ++)
     for (let y = 0; y < 8; y ++)
       if ((x + y) % 2 === 1)
         svg.appendChild(rect(x, y));
 
+  // `size` should match font definition from index.html
   const textProp = {size: 0.2, margin: 0.05};
 
   for (let y = 1; y <= 8; y ++)
@@ -1797,14 +1874,24 @@ function init () {
   svg.appendChild(image(board.bishop().x, 7 - board.bishop().y, "bishop"));
   svg.appendChild(image(board.rook().x, 7 - board.rook().y, "rook"));
 
+  // we move the rook by changing transform=translate(x y) attribute
+  // actual SVG position remain fixed, we need to save it to compute translation vector
   rook_orig.x = board.rook().x;
   rook_orig.y = board.rook().y;
 }
 
+/*
+ * show animated movement of rook from `start` via a `path`
+ * each element of `path` has `animate` property; if `false` then rook jumps with no animation
+ * `capture` is `true` if we need to show capture at the last position of `path`
+ */
 function animate(start, path, capture) {
   if (!capture)
     clearCapture();
 
+  // As of 2022-01, only Chrome (abd derivatives) seems to support CSS animation in SVG
+  // ideally, we would need to feature-test this instead of relying on user-agent string,
+  // but that's not trivial unfortunately
   if (navigator.userAgent.indexOf("Chrome") > -1)
     animatePathSVG2(path, capture? {x: board.rook().x, y: board.rook().y} : null);
   else
@@ -1845,10 +1932,14 @@ function animatePathSVG1(start, path, capture) {
 
 let animateTranslateHandler = null;
 
+/*
+ * primitive JS-based animation of transition from `trf0` to `trf1`
+ */
 function animateTranslate(elm, trf0, trf1, delay, completion_cb) {
-  const unit = 20; // ms
+  const unit = 20; // = 50 fps
   const n = Math.ceil(delay / unit);
   const animate_idx = idx => {
+    // TODO: use `requestAnimationFrame`
     elm.setAttribute("transform",
       `translate(${trf0.x * (1 - idx/n) + trf1.x * idx/n} ${trf0.y * (1 - idx/n) + trf1.y * idx/n})`);
     if (idx === n) {
@@ -1869,6 +1960,8 @@ function animatePathSVG2(path, capture) {
   elm_rook.setAttribute("transform",
       `translate(${path[0].x - rook_orig.x} ${rook_orig.y - path[0].y})`);
 
+  // TODO: instead of using setTimeout, we should listen for "animationend" event
+  // timeout value should match `transition` property from index.html
   if (path.length === 1)
     window.setTimeout(() => {
       displayCapture(capture);
@@ -1879,6 +1972,9 @@ function animatePathSVG2(path, capture) {
     window.setTimeout(() => animatePathSVG2(path.slice(1), capture), path[0].animate? 1000 : 10);
 }
 
+/*
+ * Display and clear a simple graphical representation of "capture" by sequence of red dots
+ */
 function displayCapture(capture) {
   if (capture) {
     const d = {x: capture.x < board.bishop().x ? 1 : -1, y: capture.y < board.bishop().y ? 1 : -1};
@@ -1894,6 +1990,11 @@ function clearCapture() {
   svg.querySelectorAll('circle').forEach(x => x.remove());
 }
 
+/*
+ * Animated movements of rook, 4 possible directions
+ * when it reaches the border, it smoothly slides past it and then re-appears on the opposite end
+ * (could potentially be written as one method, but it's cleaner this way)
+ */
 function animateUp (dst, capture) {
   const cur = {x: board.rook().x, y: board.rook().y};
   const prev = {x: cur.x, y: (cur.y - dst + 16) % 8};
@@ -1958,6 +2059,9 @@ function animateLeft (dst, capture) {
   animate(p, path, capture);
 }
 
+/*
+ * Reset the board; room smoothly transitions to the initial position
+ */
 function reset () {
   animate({x: board.rook().x, y: board.rook().y}, [{animate: true, x: rook_orig.x, y: rook_orig.y}], false);
 }
@@ -1979,6 +2083,11 @@ const moves = require('../model/moves');
 
 const elm_history = document.querySelector('#history > table > tbody');
 
+/*
+ * Auxiliary methods to insert SVG images
+ * We insert them by reference with IMG tag, though it could be possible to simply insert SVG
+ * This way we save time & memory on repeated images, at the cost of small initial delay
+ */
 function img_coin(coin) {
   const elm_img = document.createElement('img');
   elm_img.setAttribute('src', coin === 2? "coin-head.svg" : "coin-tail.svg");
@@ -1997,6 +2106,11 @@ function img_winner(end) {
   return elm_img;
 }
 
+/*
+ * A clean design would have just one "update" method which would sync view with current list of "moves"
+ * This would be somewhat cumbersome, so instead we provide 4 update methods, since there are
+ * only 4 possible update events: (1) new move (2) end game (3) history replay (4) reset
+ */
 function addRow() {
   const cnt = moves.count();
   const {coin, dice, pos, end} = moves.access(cnt - 1);

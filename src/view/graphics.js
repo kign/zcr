@@ -5,6 +5,10 @@ board.registerOnMove('left', animateLeft);
 board.registerOnMove('up', animateUp);
 board.registerOnMove('down', animateDown);
 
+/*
+ * Auxiliary methods to create SVG elements with provided properties
+ * NOTE: viewbox = "0 0 8 8"
+ */
 function rect (x, y) {
   const rect = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
   rect.setAttribute('x', x);
@@ -47,12 +51,16 @@ function dot(x, y) {
 const rook_orig = {};
 const svg = document.getElementById('board');
 
+/*
+ * One-time initialization call to draw the board
+ */
 function init () {
   for (let x = 0; x < 8; x ++)
     for (let y = 0; y < 8; y ++)
       if ((x + y) % 2 === 1)
         svg.appendChild(rect(x, y));
 
+  // `size` should match font definition from index.html
   const textProp = {size: 0.2, margin: 0.05};
 
   for (let y = 1; y <= 8; y ++)
@@ -63,14 +71,24 @@ function init () {
   svg.appendChild(image(board.bishop().x, 7 - board.bishop().y, "bishop"));
   svg.appendChild(image(board.rook().x, 7 - board.rook().y, "rook"));
 
+  // we move the rook by changing transform=translate(x y) attribute
+  // actual SVG position remain fixed, we need to save it to compute translation vector
   rook_orig.x = board.rook().x;
   rook_orig.y = board.rook().y;
 }
 
+/*
+ * show animated movement of rook from `start` via a `path`
+ * each element of `path` has `animate` property; if `false` then rook jumps with no animation
+ * `capture` is `true` if we need to show capture at the last position of `path`
+ */
 function animate(start, path, capture) {
   if (!capture)
     clearCapture();
 
+  // As of 2022-01, only Chrome (abd derivatives) seems to support CSS animation in SVG
+  // ideally, we would need to feature-test this instead of relying on user-agent string,
+  // but that's not trivial unfortunately
   if (navigator.userAgent.indexOf("Chrome") > -1)
     animatePathSVG2(path, capture? {x: board.rook().x, y: board.rook().y} : null);
   else
@@ -111,10 +129,14 @@ function animatePathSVG1(start, path, capture) {
 
 let animateTranslateHandler = null;
 
+/*
+ * primitive JS-based animation of transition from `trf0` to `trf1`
+ */
 function animateTranslate(elm, trf0, trf1, delay, completion_cb) {
-  const unit = 20; // ms
+  const unit = 20; // = 50 fps
   const n = Math.ceil(delay / unit);
   const animate_idx = idx => {
+    // TODO: use `requestAnimationFrame`
     elm.setAttribute("transform",
       `translate(${trf0.x * (1 - idx/n) + trf1.x * idx/n} ${trf0.y * (1 - idx/n) + trf1.y * idx/n})`);
     if (idx === n) {
@@ -135,6 +157,8 @@ function animatePathSVG2(path, capture) {
   elm_rook.setAttribute("transform",
       `translate(${path[0].x - rook_orig.x} ${rook_orig.y - path[0].y})`);
 
+  // TODO: instead of using setTimeout, we should listen for "animationend" event
+  // timeout value should match `transition` property from index.html
   if (path.length === 1)
     window.setTimeout(() => {
       displayCapture(capture);
@@ -145,6 +169,9 @@ function animatePathSVG2(path, capture) {
     window.setTimeout(() => animatePathSVG2(path.slice(1), capture), path[0].animate? 1000 : 10);
 }
 
+/*
+ * Display and clear a simple graphical representation of "capture" by sequence of red dots
+ */
 function displayCapture(capture) {
   if (capture) {
     const d = {x: capture.x < board.bishop().x ? 1 : -1, y: capture.y < board.bishop().y ? 1 : -1};
@@ -160,6 +187,11 @@ function clearCapture() {
   svg.querySelectorAll('circle').forEach(x => x.remove());
 }
 
+/*
+ * Animated movements of rook, 4 possible directions
+ * when it reaches the border, it smoothly slides past it and then re-appears on the opposite end
+ * (could potentially be written as one method, but it's cleaner this way)
+ */
 function animateUp (dst, capture) {
   const cur = {x: board.rook().x, y: board.rook().y};
   const prev = {x: cur.x, y: (cur.y - dst + 16) % 8};
@@ -224,6 +256,9 @@ function animateLeft (dst, capture) {
   animate(p, path, capture);
 }
 
+/*
+ * Reset the board; room smoothly transitions to the initial position
+ */
 function reset () {
   animate({x: board.rook().x, y: board.rook().y}, [{animate: true, x: rook_orig.x, y: rook_orig.y}], false);
 }

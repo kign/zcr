@@ -2,6 +2,11 @@ const moves = require('../model/moves');
 
 const elm_history = document.querySelector('#history > table > tbody');
 
+/*
+ * Auxiliary methods to insert SVG images
+ * We insert them by reference with IMG tag, though it could be possible to simply insert SVG
+ * This way we save time & memory on repeated images, at the cost of small initial delay
+ */
 function img_coin(coin) {
   const elm_img = document.createElement('img');
   elm_img.setAttribute('src', coin === 2? "coin-head.svg" : "coin-tail.svg");
@@ -20,6 +25,11 @@ function img_winner(end) {
   return elm_img;
 }
 
+/*
+ * A clean design would have just one "update" method which would sync view with current list of "moves"
+ * This would be somewhat cumbersome, so instead we provide 4 update methods, since there are
+ * only 4 possible update events: (1) new move (2) end game (3) history replay (4) reset
+ */
 function addRow() {
   const cnt = moves.count();
   const {coin, dice, pos, end} = moves.access(cnt - 1);

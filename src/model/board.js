@@ -5,6 +5,9 @@ let rook = null;
 let bishop = null;
 let original_rook = null;
 
+/*
+ * Initial positioning for both pieces
+ */
 function positionPiece(piece) {
   if (piece instanceof Rook) {
     rook = piece;
@@ -14,6 +17,17 @@ function positionPiece(piece) {
     bishop = piece;
 }
 
+/*
+ * Game reset
+ */
+function reset () {
+  rook.x = original_rook.x;
+  rook.y = original_rook.y;
+}
+
+/*
+ * One game step, per spec: coin, dice (twice), move
+ */
 function oneGameStep(moveCounter) {
   const coin = Math.ceil(2*Math.random());
   const dice = [Math.ceil(6*Math.random()), Math.ceil(6*Math.random())];
@@ -28,6 +42,12 @@ function oneGameStep(moveCounter) {
   moves.record(coin, dice, [rook.x, rook.y], end);
 }
 
+/*
+ * Move rook as prescribed; also determine capture (based on the position after move)
+ * and trigger animation via registered callbacks
+ * This method is also used for playback; to that end, it has `reverse` parameter
+ * to execute same movement in reverse
+ */
 function move(coin, dice, reverse) {
   if (coin === 2) { // "heads"
     if (reverse) {
@@ -57,11 +77,6 @@ function move(coin, dice, reverse) {
       return captured;
     }
   }
-}
-
-function reset () {
-  rook.x = original_rook.x;
-  rook.y = original_rook.y;
 }
 
 const animationCallbacks = {};
