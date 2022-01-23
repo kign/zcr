@@ -61,6 +61,15 @@ tr.win > td > span {
     </tr>
 </table>
 <script>
+  /*
+   * A hack to provide a flexible layout
+   * Here is the idea:
+   *    (1) make SVG as small as possible;
+   *    (2) make TD which is the parent of SVG to width 100%, forcing it to the maximum width
+   *        and height corresponding to screen height (it's set in HTML)
+   *    (3) once TD is extended, extend SVG to take maximum possible size while preserving square shape;
+   *    (4) if it appears that TD had width > height, shrink its width to that of SVG
+   */
   const fixLayout = () => {
     const svg = document.getElementById('board');
     const cnt = svg.parentElement;
